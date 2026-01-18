@@ -43,7 +43,7 @@ export const DeleteConfirmDialog = memo(function DeleteConfirmDialog({
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       onClick={handleBackdropClick}
     >
-      <div className="bg-editor-sidebar rounded-lg shadow-xl border border-editor-border p-6 max-w-md">
+      <div className="bg-editor-sidebar rounded-lg shadow-xl border border-editor-border p-6 px-8 max-w-md">
         <h3 className="text-lg font-medium text-editor-text mb-2">
           Delete {isDirectory ? 'Folder' : 'File'}?
         </h3>

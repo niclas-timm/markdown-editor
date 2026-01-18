@@ -111,7 +111,7 @@ export const ContextMenu = memo(function ContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed bg-editor-sidebar border border-editor-border rounded-md shadow-xl py-2 z-50"
+      className="fixed bg-editor-sidebar border border-editor-border rounded-md shadow-xl p-1 z-50"
       style={{
         left: adjustedPosition.x,
         top: adjustedPosition.y,

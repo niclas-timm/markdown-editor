@@ -4,6 +4,7 @@ import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { FileTree } from './FileTree';
 import { selectWorkspaceDirectory, fileExists } from '@/lib/tauri';
 import { loadWorkspaceConfig } from '@/lib/config';
+import { setLastWorkspace } from '@/lib/localStorage';
 import { useFileSystem } from '@/hooks/useFileSystem';
 
 interface SidebarProps {
@@ -27,6 +28,7 @@ export const Sidebar = memo(function Sidebar({
     const path = await selectWorkspaceDirectory();
     if (path) {
       setRootPath(path);
+      setLastWorkspace(path);
       const workspaceConfig = await loadWorkspaceConfig(path);
       setConfig(workspaceConfig);
     }

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Editor } from '@/components/Editor/Editor';
 import { Preview } from '@/components/Preview/Preview';
@@ -6,6 +6,9 @@ import { QuickFinder } from '@/components/Sidebar/QuickFinder';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useFileSystem } from '@/hooks/useFileSystem';
+import { getLastWorkspace, clearLastWorkspace } from '@/lib/localStorage';
+import { fileExists } from '@/lib/tauri';
+import { loadWorkspaceConfig } from '@/lib/config';
 
 function App() {
   const {
@@ -17,6 +20,8 @@ function App() {
     config,
     setPreviewEnabled,
     rootPath,
+    setRootPath,
+    setConfig,
     startCreatingFile,
     startCreatingFolder,
   } = useWorkspaceStore();
@@ -25,6 +30,29 @@ function App() {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [quickFinderOpen, setQuickFinderOpen] = useState(false);
   const [editorContent, setEditorContent] = useState('');
+
+  // Restore last workspace on app startup
+  useEffect(() => {
+    async function restoreWorkspace() {
+      const lastWorkspace = getLastWorkspace();
+      if (!lastWorkspace) return;
+
+      try {
+        const exists = await fileExists(lastWorkspace);
+        if (exists) {
+          setRootPath(lastWorkspace);
+          const workspaceConfig = await loadWorkspaceConfig(lastWorkspace);
+          setConfig(workspaceConfig);
+        } else {
+          clearLastWorkspace();
+        }
+      } catch {
+        clearLastWorkspace();
+      }
+    }
+
+    restoreWorkspace();
+  }, [setRootPath, setConfig]);
 
   const handleSelectFile = useCallback(
     (path: string, isDirectory: boolean) => {
