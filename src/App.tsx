@@ -61,10 +61,8 @@ function App() {
     restoreWorkspace();
   }, [setRootPath, setConfig]);
 
-  // Initialize theme on startup and listen for system preference changes
+  // Listen for system preference changes
   useEffect(() => {
-    useThemeStore.getState().initializeTheme();
-
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
       const { preference, setPreference } = useThemeStore.getState();
