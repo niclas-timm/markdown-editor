@@ -3,12 +3,18 @@ import { Sidebar } from '@/components/Sidebar/Sidebar';
 import { Editor } from '@/components/Editor/Editor';
 import { Preview } from '@/components/Preview/Preview';
 import { QuickFinder } from '@/components/Sidebar/QuickFinder';
+import { CommandPalette } from '@/components/CommandPalette/CommandPalette';
+import { NotificationToast } from '@/components/Notifications/NotificationToast';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
+import { useCommandPaletteStore } from '@/stores/commandPaletteStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useFileSystem } from '@/hooks/useFileSystem';
 import { getLastWorkspace, clearLastWorkspace } from '@/lib/localStorage';
 import { fileExists } from '@/lib/tauri';
 import { loadWorkspaceConfig } from '@/lib/config';
+import { initializeCommands } from '@/commands';
+
+initializeCommands();
 
 function App() {
   const {
@@ -132,6 +138,7 @@ function App() {
       onNewFile: handleNewFile,
       onNewFolder: handleNewFolder,
       onQuickFind: () => setQuickFinderOpen(true),
+      onCommandPalette: () => useCommandPaletteStore.getState().open(),
       onToggleSidebar: () => {
         setSidebarVisible((v) => {
           if (!v) {
@@ -180,14 +187,16 @@ function App() {
         onSelectFile={(path) => handleSelectFile(path, false)}
       />
 
+      <CommandPalette />
+      <NotificationToast />
+
       {/* Status bar */}
       <div className="h-6 bg-editor-sidebar border-t border-editor-border flex items-center text-xs text-editor-textMuted">
         <span className="flex-1 truncate" style={{ paddingLeft: '16px', paddingBottom: '4px' }}>
           {currentFile ? currentFile.split('/').pop() : 'No file open'}
         </span>
         <span className="flex gap-4" style={{ paddingRight: '16px', paddingBottom: '4px' }}>
-          <span>Cmd+1: Sidebar</span>
-          <span>Cmd+2: Editor</span>
+          <span>Cmd+Shift+P: Commands</span>
           <span>Cmd+P: Find</span>
         </span>
       </div>

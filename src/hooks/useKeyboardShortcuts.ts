@@ -5,6 +5,7 @@ interface ShortcutActions {
   onNewFile: () => void;
   onNewFolder: () => void;
   onQuickFind: () => void;
+  onCommandPalette: () => void;
   onToggleSidebar: () => void;
   onTogglePreview: () => void;
   onFocusSidebar: () => void;
@@ -37,8 +38,15 @@ export function useKeyboardShortcuts(actions: ShortcutActions) {
         return;
       }
 
+      // Cmd+Shift+P - Command palette
+      if (isMod && e.shiftKey && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        actions.onCommandPalette();
+        return;
+      }
+
       // Cmd+P - Quick find
-      if (isMod && e.key === 'p') {
+      if (isMod && !e.shiftKey && (e.key === 'p' || e.key === 'P')) {
         e.preventDefault();
         actions.onQuickFind();
         return;
