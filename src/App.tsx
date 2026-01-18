@@ -7,6 +7,7 @@ import { CommandPalette } from '@/components/CommandPalette/CommandPalette';
 import { NotificationToast } from '@/components/Notifications/NotificationToast';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { useCommandPaletteStore } from '@/stores/commandPaletteStore';
+import { useThemeStore } from '@/stores/themeStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useFileSystem } from '@/hooks/useFileSystem';
 import { getLastWorkspace, clearLastWorkspace } from '@/lib/localStorage';
@@ -59,6 +60,22 @@ function App() {
 
     restoreWorkspace();
   }, [setRootPath, setConfig]);
+
+  // Initialize theme on startup and listen for system preference changes
+  useEffect(() => {
+    useThemeStore.getState().initializeTheme();
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      const { preference, setPreference } = useThemeStore.getState();
+      if (preference === 'system') {
+        setPreference('system');
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const handleSelectFile = useCallback(
     (path: string, isDirectory: boolean) => {

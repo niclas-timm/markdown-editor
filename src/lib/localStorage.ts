@@ -11,3 +11,20 @@ export function setLastWorkspace(path: string): void {
 export function clearLastWorkspace(): void {
   localStorage.removeItem(LAST_WORKSPACE_KEY);
 }
+
+// Theme preference storage
+const THEME_KEY = 'mdeditor:theme';
+
+export type ThemePreference = 'light' | 'dark' | 'system';
+
+export function getThemePreference(): ThemePreference {
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored === 'light' || stored === 'dark' || stored === 'system') {
+    return stored;
+  }
+  return 'system';
+}
+
+export function setThemePreference(theme: ThemePreference): void {
+  localStorage.setItem(THEME_KEY, theme);
+}

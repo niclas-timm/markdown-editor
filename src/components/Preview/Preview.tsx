@@ -1,5 +1,6 @@
 import { memo, useMemo } from 'react';
 import { renderMarkdown } from '@/lib/markdown';
+import { useThemeStore } from '@/stores/themeStore';
 
 interface PreviewProps {
   content: string;
@@ -8,13 +9,16 @@ interface PreviewProps {
 
 export const Preview = memo(function Preview({ content, isVisible }: PreviewProps) {
   const html = useMemo(() => renderMarkdown(content), [content]);
+  const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
 
   if (!isVisible) return null;
+
+  const proseClasses = resolvedTheme === 'dark' ? 'prose prose-invert prose-sm' : 'prose prose-sm';
 
   return (
     <div className="flex-1 overflow-auto bg-editor-bg border-l border-editor-border">
       <article
-        className="prose prose-invert prose-sm max-w-none p-8
+        className={`${proseClasses} max-w-none p-8
           prose-headings:text-editor-text prose-headings:font-semibold
           prose-p:text-editor-text prose-p:leading-relaxed
           prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
@@ -26,7 +30,7 @@ export const Preview = memo(function Preview({ content, isVisible }: PreviewProp
           prose-hr:border-editor-border
           prose-table:text-editor-text
           prose-th:border-editor-border prose-th:bg-editor-sidebar
-          prose-td:border-editor-border"
+          prose-td:border-editor-border`}
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </div>

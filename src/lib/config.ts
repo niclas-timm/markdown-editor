@@ -8,6 +8,7 @@ const defaultConfig: WorkspaceConfig = {
   expandedFolders: [],
   sidebarWidth: 250,
   previewEnabled: false,
+  showDotfiles: false,
 };
 
 export async function loadWorkspaceConfig(

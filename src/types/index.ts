@@ -19,6 +19,7 @@ export interface WorkspaceConfig {
   expandedFolders: string[];
   sidebarWidth: number;
   previewEnabled: boolean;
+  showDotfiles: boolean;
 }
 
 export interface WorkspaceState {

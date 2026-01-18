@@ -167,10 +167,11 @@ export const FileTree = memo(function FileTree({
     enabled: useVirtual,
   });
 
-  // Check if creating at root level
+  // Check if creating at root level and capture mode
   const isCreatingAtRoot =
     editingState?.parentPath === rootPath &&
     (editingState?.mode === 'creating-file' || editingState?.mode === 'creating-folder');
+  const isCreatingFolderAtRoot = editingState?.mode === 'creating-folder';
 
   const handleContextMenu = useCallback((e: React.MouseEvent, node: FileTreeNode) => {
     setContextMenu({
@@ -269,14 +270,14 @@ export const FileTree = memo(function FileTree({
 
   const handleRootCreateConfirm = useCallback(
     async (name: string) => {
-      if (!rootPath || !editingState) return;
-      if (editingState.mode === 'creating-folder') {
+      if (!rootPath) return;
+      if (isCreatingFolderAtRoot) {
         await onCreateFolder(rootPath, name);
       } else {
         await onCreateFile(rootPath, name);
       }
     },
-    [rootPath, editingState, onCreateFile, onCreateFolder]
+    [rootPath, isCreatingFolderAtRoot, onCreateFile, onCreateFolder]
   );
 
   // Empty state

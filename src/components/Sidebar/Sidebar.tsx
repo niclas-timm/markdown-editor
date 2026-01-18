@@ -34,12 +34,12 @@ export const Sidebar = memo(function Sidebar({
     }
   }, [setRootPath, setConfig]);
 
-  // Load directory when root path changes
+  // Load directory when root path or dotfiles visibility changes
   useEffect(() => {
     if (rootPath) {
       loadRootDirectory();
     }
-  }, [rootPath, loadRootDirectory]);
+  }, [rootPath, config.showDotfiles, loadRootDirectory]);
 
   // Resize handler
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -73,8 +73,9 @@ export const Sidebar = memo(function Sidebar({
   // File operation handlers
   const handleCreateFile = useCallback(
     async (parentPath: string, name: string) => {
-      // Add .md extension if not present
-      const fileName = name.endsWith('.md') ? name : `${name}.md`;
+      // Add .md extension if not present (but not for dotfiles)
+      const isDotfile = name.startsWith('.');
+      const fileName = isDotfile || name.endsWith('.md') ? name : `${name}.md`;
       const fullPath = `${parentPath}/${fileName}`;
 
       // Check for conflicts (wrapped in try-catch for Tauri permission issues)

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { EditorState } from '@codemirror/state';
+import { EditorState, Compartment } from '@codemirror/state';
 import {
   EditorView,
   keymap,
@@ -17,6 +17,38 @@ import {
 } from '@codemirror/language';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { searchKeymap } from '@codemirror/search';
+import { useThemeStore } from '@/stores/themeStore';
+
+const lightTheme = EditorView.theme(
+  {
+    '&': {
+      backgroundColor: '#ffffff',
+      color: '#1e1e1e',
+    },
+    '.cm-content': {
+      caretColor: '#1e1e1e',
+    },
+    '.cm-cursor, .cm-dropCursor': {
+      borderLeftColor: '#1e1e1e',
+    },
+    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection':
+      {
+        backgroundColor: '#add6ff',
+      },
+    '.cm-gutters': {
+      backgroundColor: '#f3f3f3',
+      color: '#6e6e6e',
+      border: 'none',
+    },
+    '.cm-activeLineGutter': {
+      backgroundColor: '#e4e4e4',
+    },
+    '.cm-activeLine': {
+      backgroundColor: '#f5f5f5',
+    },
+  },
+  { dark: false }
+);
 
 interface UseEditorOptions {
   onChange: (content: string) => void;
@@ -26,6 +58,9 @@ interface UseEditorOptions {
 export function useEditor({ onChange, onSave }: UseEditorOptions) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const themeCompartment = useRef(new Compartment());
+
+  const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
 
   // Create editor on mount
   useEffect(() => {
@@ -47,6 +82,8 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
       },
     ]);
 
+    const initialTheme = useThemeStore.getState().resolvedTheme;
+
     const state = EditorState.create({
       doc: '',
       extensions: [
@@ -60,7 +97,9 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
           base: markdownLanguage,
           codeLanguages: languages,
         }),
-        oneDark,
+        themeCompartment.current.of(
+          initialTheme === 'dark' ? oneDark : lightTheme
+        ),
         keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
         saveKeymap,
         updateListener,
@@ -97,6 +136,17 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
       viewRef.current = null;
     };
   }, [onChange, onSave]);
+
+  // Update CodeMirror theme when resolvedTheme changes
+  useEffect(() => {
+    if (viewRef.current) {
+      viewRef.current.dispatch({
+        effects: themeCompartment.current.reconfigure(
+          resolvedTheme === 'dark' ? oneDark : lightTheme
+        ),
+      });
+    }
+  }, [resolvedTheme]);
 
   // Update content when file changes
   const setContent = useCallback((content: string) => {

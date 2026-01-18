@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FileIcon } from './FileIcon';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 
 interface EditableFileNameProps {
   initialValue?: string;
@@ -12,11 +13,11 @@ interface EditableFileNameProps {
 
 const INVALID_CHARS = /[/\\:*?"<>|]/;
 
-function validateName(name: string): string | null {
+function validateName(name: string, showDotfiles: boolean): string | null {
   const trimmed = name.trim();
   if (!trimmed) return 'Name cannot be empty';
   if (INVALID_CHARS.test(trimmed)) return 'Invalid characters in name';
-  if (trimmed.startsWith('.')) return 'Name cannot start with a dot';
+  if (trimmed.startsWith('.') && !showDotfiles) return 'Name cannot start with a dot';
   return null;
 }
 
@@ -28,6 +29,7 @@ export function EditableFileName({
   onConfirm,
   onCancel,
 }: EditableFileNameProps) {
+  const { config } = useWorkspaceStore();
   const [value, setValue] = useState(initialValue);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,7 +46,7 @@ export function EditableFileName({
   const handleConfirm = useCallback(() => {
     if (isConfirmedRef.current) return;
 
-    const validationError = validateName(value);
+    const validationError = validateName(value, config.showDotfiles);
     if (validationError) {
       setError(validationError);
       return;
@@ -52,7 +54,7 @@ export function EditableFileName({
 
     isConfirmedRef.current = true;
     onConfirm(value.trim());
-  }, [value, onConfirm]);
+  }, [value, config.showDotfiles, onConfirm]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

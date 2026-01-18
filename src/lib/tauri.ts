@@ -19,16 +19,30 @@ export async function selectWorkspaceDirectory(): Promise<string | null> {
   return selected as string | null;
 }
 
-export async function readDirectoryContents(path: string): Promise<FileTreeNode[]> {
+// Files/directories that are always hidden (app config, git internals)
+const ALWAYS_HIDDEN = ['.git', '.mdeditor.json'];
+
+export interface ReadDirectoryOptions {
+  showDotfiles?: boolean;
+}
+
+export async function readDirectoryContents(
+  path: string,
+  options: ReadDirectoryOptions = {}
+): Promise<FileTreeNode[]> {
+  const { showDotfiles = false } = options;
   const entries = await readDir(path);
 
   const nodes: FileTreeNode[] = entries
     .filter((entry) => {
       const name = entry.name || '';
-      // Filter hidden files
-      if (name.startsWith('.')) return false;
-      // Show directories and .md files only
-      if (!entry.isDirectory && !name.endsWith('.md')) return false;
+      // Always hide app config and git directory
+      if (ALWAYS_HIDDEN.includes(name)) return false;
+      // Filter hidden files unless showDotfiles is enabled
+      if (name.startsWith('.') && !showDotfiles) return false;
+      // Show directories, .md files, and dotfiles (when enabled)
+      const isDotfile = name.startsWith('.');
+      if (!entry.isDirectory && !name.endsWith('.md') && !isDotfile) return false;
       return true;
     })
     .map((entry) => {

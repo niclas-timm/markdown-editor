@@ -12,21 +12,21 @@ import {
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 
 export function useFileSystem() {
-  const { rootPath, setFileTree, updateFileTree } = useWorkspaceStore();
+  const { rootPath, config, setFileTree, updateFileTree } = useWorkspaceStore();
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadRootDirectory = useCallback(async () => {
     if (!rootPath) return;
-    const tree = await readDirectoryContents(rootPath);
+    const tree = await readDirectoryContents(rootPath, { showDotfiles: config.showDotfiles });
     setFileTree(tree);
-  }, [rootPath, setFileTree]);
+  }, [rootPath, config.showDotfiles, setFileTree]);
 
   const loadDirectoryContents = useCallback(
     async (path: string) => {
-      const children = await readDirectoryContents(path);
+      const children = await readDirectoryContents(path, { showDotfiles: config.showDotfiles });
       updateFileTree(path, children);
     },
-    [updateFileTree]
+    [config.showDotfiles, updateFileTree]
   );
 
   const loadFileContent = useCallback(async (path: string) => {

@@ -42,6 +42,7 @@ const defaultConfig: WorkspaceConfig = {
   expandedFolders: [],
   sidebarWidth: 250,
   previewEnabled: false,
+  showDotfiles: false,
 };
 
 const initialState: WorkspaceState = {

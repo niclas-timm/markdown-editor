@@ -1,4 +1,4 @@
 # Todos
-
-- Git operations (commit, push)
-- Toggle for dotfiles and dot directories
+- Fix bug with Dotfiles
+- Dark mode / light mode
+- Font selection
