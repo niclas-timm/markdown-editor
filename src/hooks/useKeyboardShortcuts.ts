@@ -10,6 +10,7 @@ interface ShortcutActions {
   onTogglePreview: () => void;
   onFocusSidebar: () => void;
   onFocusEditor: () => void;
+  onDeleteItem: () => void;
 }
 
 export function useKeyboardShortcuts(actions: ShortcutActions) {
@@ -77,6 +78,13 @@ export function useKeyboardShortcuts(actions: ShortcutActions) {
       if (isMod && e.key === '2') {
         e.preventDefault();
         actions.onFocusEditor();
+        return;
+      }
+
+      // Cmd+Backspace - Delete selected item
+      if (isMod && e.key === 'Backspace') {
+        e.preventDefault();
+        actions.onDeleteItem();
         return;
       }
     },

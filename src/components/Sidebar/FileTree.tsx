@@ -5,7 +5,6 @@ import { useFileSystem } from '@/hooks/useFileSystem';
 import { FileTreeItem } from './FileTreeItem';
 import { EditableFileName } from './EditableFileName';
 import { ContextMenu } from './ContextMenu';
-import { DeleteConfirmDialog } from './DeleteConfirmDialog';
 import type { FileTreeNode } from '@/types';
 
 interface FileTreeProps {
@@ -23,11 +22,6 @@ interface ContextMenuState {
   targetPath: string | null;
   targetIsDirectory: boolean;
   targetName: string;
-}
-
-interface DeleteConfirmState {
-  path: string;
-  isDirectory: boolean;
 }
 
 // Flatten tree for virtual scrolling
@@ -78,7 +72,6 @@ export const FileTree = memo(function FileTree({
   const parentRef = useRef<HTMLDivElement>(null);
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState | null>(null);
 
   const flatItems = useMemo(
     () => flattenTree(fileTree, config.expandedFolders),
@@ -232,23 +225,9 @@ export const FileTree = memo(function FileTree({
 
   const handleContextDelete = useCallback(() => {
     if (contextMenu?.targetPath) {
-      setDeleteConfirm({
-        path: contextMenu.targetPath,
-        isDirectory: contextMenu.targetIsDirectory,
-      });
+      onDelete(contextMenu.targetPath, contextMenu.targetIsDirectory);
     }
-  }, [contextMenu]);
-
-  const handleConfirmDelete = useCallback(async () => {
-    if (deleteConfirm) {
-      await onDelete(deleteConfirm.path, deleteConfirm.isDirectory);
-      setDeleteConfirm(null);
-    }
-  }, [deleteConfirm, onDelete]);
-
-  const handleCancelDelete = useCallback(() => {
-    setDeleteConfirm(null);
-  }, []);
+  }, [contextMenu, onDelete]);
 
   const handleConfirmCreate = useCallback(
     async (parentPath: string, name: string, isDirectory: boolean) => {
@@ -359,15 +338,6 @@ export const FileTree = memo(function FileTree({
             onDelete={handleContextDelete}
           />
         )}
-
-        {deleteConfirm && (
-          <DeleteConfirmDialog
-            itemPath={deleteConfirm.path}
-            isDirectory={deleteConfirm.isDirectory}
-            onConfirm={handleConfirmDelete}
-            onCancel={handleCancelDelete}
-          />
-        )}
       </div>
     );
   }
@@ -430,15 +400,6 @@ export const FileTree = memo(function FileTree({
           onNewFolder={handleContextNewFolder}
           onRename={handleContextRename}
           onDelete={handleContextDelete}
-        />
-      )}
-
-      {deleteConfirm && (
-        <DeleteConfirmDialog
-          itemPath={deleteConfirm.path}
-          isDirectory={deleteConfirm.isDirectory}
-          onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
         />
       )}
     </div>

@@ -32,7 +32,7 @@ function App() {
     startCreatingFile,
     startCreatingFolder,
   } = useWorkspaceStore();
-  const { saveFileContentImmediate } = useFileSystem();
+  const { saveFileContentImmediate, deleteItem } = useFileSystem();
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [quickFinderOpen, setQuickFinderOpen] = useState(false);
@@ -147,6 +147,16 @@ function App() {
     }
   }, []);
 
+  const handleDeleteItem = useCallback(async () => {
+    if (selectedSidebarItem) {
+      await deleteItem(selectedSidebarItem);
+      // Clear currentFile if it was deleted
+      if (currentFile === selectedSidebarItem || currentFile?.startsWith(selectedSidebarItem + '/')) {
+        setCurrentFile(null);
+      }
+    }
+  }, [selectedSidebarItem, currentFile, setCurrentFile, deleteItem]);
+
   const shortcutActions = useMemo(
     () => ({
       onSave: handleSave,
@@ -166,6 +176,7 @@ function App() {
       onTogglePreview: () => setPreviewEnabled(!config.previewEnabled),
       onFocusSidebar: handleFocusSidebar,
       onFocusEditor: handleFocusEditor,
+      onDeleteItem: handleDeleteItem,
     }),
     [
       handleSave,
@@ -175,6 +186,7 @@ function App() {
       setPreviewEnabled,
       handleFocusSidebar,
       handleFocusEditor,
+      handleDeleteItem,
     ]
   );
 
