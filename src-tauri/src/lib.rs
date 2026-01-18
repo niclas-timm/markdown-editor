@@ -48,6 +48,31 @@ fn git_push(cwd: String) -> GitResult {
     run_git_command(&["push"], &cwd)
 }
 
+#[derive(serde::Serialize)]
+struct ShellResult {
+    success: bool,
+    error: Option<String>,
+}
+
+#[tauri::command]
+fn open_terminal_at(path: String) -> ShellResult {
+    match Command::new("open")
+        .args(["-a", "Terminal", &path])
+        .spawn()
+    {
+        Ok(_) => ShellResult { success: true, error: None },
+        Err(e) => ShellResult { success: false, error: Some(e.to_string()) },
+    }
+}
+
+#[tauri::command]
+fn open_finder_at(path: String) -> ShellResult {
+    match Command::new("open").arg(&path).spawn() {
+        Ok(_) => ShellResult { success: true, error: None },
+        Err(e) => ShellResult { success: false, error: Some(e.to_string()) },
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -58,7 +83,9 @@ pub fn run() {
             git_status,
             git_add_all,
             git_commit,
-            git_push
+            git_push,
+            open_terminal_at,
+            open_finder_at
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
