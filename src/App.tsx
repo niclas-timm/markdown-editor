@@ -1,50 +1,169 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { useState, useCallback, useMemo } from 'react';
+import { Sidebar } from '@/components/Sidebar/Sidebar';
+import { Editor } from '@/components/Editor/Editor';
+import { Preview } from '@/components/Preview/Preview';
+import { QuickFinder } from '@/components/Sidebar/QuickFinder';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useFileSystem } from '@/hooks/useFileSystem';
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const {
+    currentFile,
+    setCurrentFile,
+    selectedSidebarItem,
+    isSelectedItemDirectory,
+    setSelectedSidebarItem,
+    config,
+    setPreviewEnabled,
+    rootPath,
+    startCreatingFile,
+    startCreatingFolder,
+  } = useWorkspaceStore();
+  const { saveFileContentImmediate } = useFileSystem();
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [quickFinderOpen, setQuickFinderOpen] = useState(false);
+  const [editorContent, setEditorContent] = useState('');
+
+  const handleSelectFile = useCallback(
+    (path: string, isDirectory: boolean) => {
+      setSelectedSidebarItem(path, isDirectory);
+      if (!isDirectory) {
+        setCurrentFile(path);
+      }
+    },
+    [setSelectedSidebarItem, setCurrentFile]
+  );
+
+  const handleContentChange = useCallback((content: string) => {
+    setEditorContent(content);
+  }, []);
+
+  const handleSave = useCallback(() => {
+    if (currentFile && editorContent) {
+      saveFileContentImmediate(currentFile, editorContent);
+    }
+  }, [currentFile, editorContent, saveFileContentImmediate]);
+
+  const handleNewFile = useCallback(() => {
+    if (!rootPath) return;
+
+    let targetFolder = rootPath;
+
+    if (selectedSidebarItem) {
+      // If selected item is a folder, create inside it
+      // If selected item is a file, create in its parent folder
+      targetFolder = isSelectedItemDirectory
+        ? selectedSidebarItem
+        : selectedSidebarItem.substring(0, selectedSidebarItem.lastIndexOf('/'));
+    } else if (currentFile) {
+      // Fallback to currentFile's parent
+      targetFolder = currentFile.substring(0, currentFile.lastIndexOf('/'));
+    }
+
+    startCreatingFile(targetFolder);
+  }, [rootPath, selectedSidebarItem, isSelectedItemDirectory, currentFile, startCreatingFile]);
+
+  const handleNewFolder = useCallback(() => {
+    if (!rootPath) return;
+
+    let targetFolder = rootPath;
+
+    if (selectedSidebarItem) {
+      // If selected item is a folder, create inside it
+      // If selected item is a file, create in its parent folder
+      targetFolder = isSelectedItemDirectory
+        ? selectedSidebarItem
+        : selectedSidebarItem.substring(0, selectedSidebarItem.lastIndexOf('/'));
+    } else if (currentFile) {
+      // Fallback to currentFile's parent
+      targetFolder = currentFile.substring(0, currentFile.lastIndexOf('/'));
+    }
+
+    startCreatingFolder(targetFolder);
+  }, [rootPath, selectedSidebarItem, isSelectedItemDirectory, currentFile, startCreatingFolder]);
+
+  const handleFocusSidebar = useCallback(() => {
+    const sidebarTree = document.querySelector('[role="tree"]') as HTMLElement;
+    if (sidebarTree) {
+      sidebarTree.focus();
+    }
+  }, []);
+
+  const handleFocusEditor = useCallback(() => {
+    const editorContent = document.querySelector('.cm-content') as HTMLElement;
+    if (editorContent) {
+      editorContent.focus();
+    }
+  }, []);
+
+  const shortcutActions = useMemo(
+    () => ({
+      onSave: handleSave,
+      onNewFile: handleNewFile,
+      onNewFolder: handleNewFolder,
+      onQuickFind: () => setQuickFinderOpen(true),
+      onToggleSidebar: () => {
+        setSidebarVisible((v) => {
+          if (!v) {
+            // Opening sidebar - focus tree after render
+            setTimeout(() => handleFocusSidebar(), 0);
+          }
+          return !v;
+        });
+      },
+      onTogglePreview: () => setPreviewEnabled(!config.previewEnabled),
+      onFocusSidebar: handleFocusSidebar,
+      onFocusEditor: handleFocusEditor,
+    }),
+    [
+      handleSave,
+      handleNewFile,
+      handleNewFolder,
+      config.previewEnabled,
+      setPreviewEnabled,
+      handleFocusSidebar,
+      handleFocusEditor,
+    ]
+  );
+
+  useKeyboardShortcuts(shortcutActions);
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
+    <div className="h-screen flex flex-col bg-editor-bg text-editor-text overflow-hidden">
+      <div className="flex-1 flex min-h-0">
+        <Sidebar
+          selectedPath={selectedSidebarItem}
+          onSelectFile={handleSelectFile}
+          isVisible={sidebarVisible}
         />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+
+        <div className="flex-1 flex min-w-0">
+          <Editor filePath={currentFile} onContentChange={handleContentChange} />
+
+          <Preview content={editorContent} isVisible={config.previewEnabled} />
+        </div>
+      </div>
+
+      <QuickFinder
+        isOpen={quickFinderOpen}
+        onClose={() => setQuickFinderOpen(false)}
+        onSelectFile={(path) => handleSelectFile(path, false)}
+      />
+
+      {/* Status bar */}
+      <div className="h-6 bg-editor-sidebar border-t border-editor-border flex items-center text-xs text-editor-textMuted">
+        <span className="flex-1 truncate" style={{ paddingLeft: '16px', paddingBottom: '4px' }}>
+          {currentFile ? currentFile.split('/').pop() : 'No file open'}
+        </span>
+        <span className="flex gap-4" style={{ paddingRight: '16px', paddingBottom: '4px' }}>
+          <span>Cmd+1: Sidebar</span>
+          <span>Cmd+2: Editor</span>
+          <span>Cmd+P: Find</span>
+        </span>
+      </div>
+    </div>
   );
 }
 
