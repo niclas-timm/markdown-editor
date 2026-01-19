@@ -1,6 +1,6 @@
 import { appConfigDir } from '@tauri-apps/api/path';
 import { readTextFile, writeTextFile, exists, mkdir } from '@tauri-apps/plugin-fs';
-import type { AppSettings, ThemePreference } from '@/types';
+import type { AppSettings, ThemePreference, EditorWidth } from '@/types';
 
 const SETTINGS_FILENAME = 'settings.json';
 
@@ -8,6 +8,7 @@ const defaultSettings: AppSettings = {
   theme: 'system',
   fontSize: 14,
   fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+  editorWidth: 'full',
 };
 
 function isValidTheme(value: unknown): value is ThemePreference {
@@ -22,6 +23,10 @@ function isValidFontFamily(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0;
 }
 
+function isValidEditorWidth(value: unknown): value is EditorWidth {
+  return value === 'prose' || value === 'full';
+}
+
 function sanitizeSettings(loaded: unknown): Partial<AppSettings> {
   if (typeof loaded !== 'object' || loaded === null) {
     return {};
@@ -33,6 +38,7 @@ function sanitizeSettings(loaded: unknown): Partial<AppSettings> {
   if (isValidTheme(obj.theme)) result.theme = obj.theme;
   if (isValidFontSize(obj.fontSize)) result.fontSize = obj.fontSize;
   if (isValidFontFamily(obj.fontFamily)) result.fontFamily = obj.fontFamily;
+  if (isValidEditorWidth(obj.editorWidth)) result.editorWidth = obj.editorWidth;
 
   return result;
 }

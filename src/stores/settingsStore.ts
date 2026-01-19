@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AppSettings, ThemePreference } from '@/types';
+import type { AppSettings, ThemePreference, EditorWidth } from '@/types';
 import { loadSettings, saveSettings, getDefaultSettings } from '@/lib/settings';
 
 interface SettingsState {
@@ -14,6 +14,7 @@ interface SettingsActions {
   setTheme: (theme: ThemePreference) => Promise<void>;
   setFontSize: (size: number) => Promise<void>;
   setFontFamily: (family: string) => Promise<void>;
+  setEditorWidth: (width: EditorWidth) => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState & SettingsActions>(
@@ -47,6 +48,10 @@ export const useSettingsStore = create<SettingsState & SettingsActions>(
 
     setFontFamily: async (family) => {
       await get().updateSettings({ fontFamily: family });
+    },
+
+    setEditorWidth: async (width) => {
+      await get().updateSettings({ editorWidth: width });
     },
   })
 );

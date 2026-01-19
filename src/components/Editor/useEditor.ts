@@ -19,6 +19,7 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { searchKeymap } from '@codemirror/search';
 import { useThemeStore } from '@/stores/themeStore';
 import { useSettingsStore } from '@/stores/settingsStore';
+import type { EditorWidth } from '@/types';
 
 const lightTheme = EditorView.theme(
   {
@@ -51,6 +52,25 @@ const lightTheme = EditorView.theme(
   { dark: false }
 );
 
+function getWidthTheme(editorWidth: EditorWidth) {
+  if (editorWidth === 'prose') {
+    return EditorView.theme({
+      '.cm-content': {
+        maxWidth: '80ch',
+        marginLeft: 'auto',
+        marginRight: 'auto',
+      },
+    });
+  }
+  return EditorView.theme({
+    '.cm-content': {
+      maxWidth: 'none',
+      marginLeft: '0',
+      marginRight: '0',
+    },
+  });
+}
+
 interface UseEditorOptions {
   onChange: (content: string) => void;
   onSave: () => void;
@@ -61,6 +81,7 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
   const viewRef = useRef<EditorView | null>(null);
   const themeCompartment = useRef(new Compartment());
   const fontCompartment = useRef(new Compartment());
+  const widthCompartment = useRef(new Compartment());
 
   const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
   const settings = useSettingsStore((state) => state.settings);
@@ -113,6 +134,7 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
             },
           })
         ),
+        widthCompartment.current.of(getWidthTheme(initialSettings.editorWidth)),
         keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
         saveKeymap,
         updateListener,
@@ -174,6 +196,17 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
       });
     }
   }, [settings.fontSize, settings.fontFamily]);
+
+  // Update CodeMirror width when settings change
+  useEffect(() => {
+    if (viewRef.current) {
+      viewRef.current.dispatch({
+        effects: widthCompartment.current.reconfigure(
+          getWidthTheme(settings.editorWidth)
+        ),
+      });
+    }
+  }, [settings.editorWidth]);
 
   // Update content when file changes
   const setContent = useCallback((content: string) => {

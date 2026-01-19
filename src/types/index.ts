@@ -45,8 +45,11 @@ export interface WorkspaceState {
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 
+export type EditorWidth = 'prose' | 'full';
+
 export interface AppSettings {
   theme: ThemePreference;
   fontSize: number;
   fontFamily: string;
+  editorWidth: EditorWidth;
 }
