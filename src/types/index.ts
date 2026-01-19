@@ -13,6 +13,15 @@ export interface EditingState {
   initialValue?: string;
 }
 
+export interface DragState {
+  draggedPath: string;
+  draggedIsDirectory: boolean;
+  dropTargetPath: string | null;
+  // The actual destination directory (may differ if dropping on a file)
+  destinationPath: string | null;
+  isValidDrop: boolean;
+}
+
 export interface WorkspaceConfig {
   version: string;
   lastOpenedFile?: string;
@@ -31,4 +40,13 @@ export interface WorkspaceState {
   config: WorkspaceConfig;
   isLoading: boolean;
   editingState: EditingState | null;
+  dragState: DragState | null;
+}
+
+export type ThemePreference = 'light' | 'dark' | 'system';
+
+export interface AppSettings {
+  theme: ThemePreference;
+  fontSize: number;
+  fontFamily: string;
 }

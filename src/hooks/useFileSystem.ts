@@ -130,6 +130,43 @@ export function useFileSystem() {
     return fileExists(path);
   }, []);
 
+  const moveItem = useCallback(
+    async (sourcePath: string, destinationParentPath: string) => {
+      const fileName = sourcePath.split('/').pop()!;
+      const destinationPath = `${destinationParentPath}/${fileName}`;
+
+      // Check if destination already exists
+      if (await fileExists(destinationPath)) {
+        throw new Error('A file or folder with that name already exists at the destination');
+      }
+
+      // Perform the move via Tauri (rename works across directories)
+      await renameFileOrDirectory(sourcePath, destinationPath);
+
+      // Reload affected directories
+      const sourceParent = sourcePath.substring(0, sourcePath.lastIndexOf('/'));
+
+      // Reload source parent
+      if (sourceParent === rootPath) {
+        await loadRootDirectory();
+      } else {
+        await loadDirectoryContents(sourceParent);
+      }
+
+      // Reload destination parent (if different from source)
+      if (destinationParentPath !== sourceParent) {
+        if (destinationParentPath === rootPath) {
+          await loadRootDirectory();
+        } else {
+          await loadDirectoryContents(destinationParentPath);
+        }
+      }
+
+      return destinationPath;
+    },
+    [rootPath, loadRootDirectory, loadDirectoryContents]
+  );
+
   return {
     loadRootDirectory,
     loadDirectoryContents,
@@ -141,5 +178,6 @@ export function useFileSystem() {
     renameItem,
     deleteItem,
     checkFileExists,
+    moveItem,
   };
 }

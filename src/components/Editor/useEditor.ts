@@ -18,6 +18,7 @@ import {
 import { oneDark } from '@codemirror/theme-one-dark';
 import { searchKeymap } from '@codemirror/search';
 import { useThemeStore } from '@/stores/themeStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 
 const lightTheme = EditorView.theme(
   {
@@ -59,8 +60,10 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const themeCompartment = useRef(new Compartment());
+  const fontCompartment = useRef(new Compartment());
 
   const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
+  const settings = useSettingsStore((state) => state.settings);
 
   // Create editor on mount
   useEffect(() => {
@@ -83,6 +86,7 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
     ]);
 
     const initialTheme = useThemeStore.getState().resolvedTheme;
+    const initialSettings = useSettingsStore.getState().settings;
 
     const state = EditorState.create({
       doc: '',
@@ -100,6 +104,15 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
         themeCompartment.current.of(
           initialTheme === 'dark' ? oneDark : lightTheme
         ),
+        fontCompartment.current.of(
+          EditorView.theme({
+            '.cm-scroller': {
+              fontFamily: initialSettings.fontFamily,
+              fontSize: `${initialSettings.fontSize}px`,
+              lineHeight: '1.6',
+            },
+          })
+        ),
         keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
         saveKeymap,
         updateListener,
@@ -110,9 +123,6 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
           },
           '.cm-scroller': {
             overflow: 'auto',
-            fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
-            fontSize: '14px',
-            lineHeight: '1.6',
           },
           '.cm-content': {
             padding: '16px 0',
@@ -147,6 +157,23 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
       });
     }
   }, [resolvedTheme]);
+
+  // Update CodeMirror font settings when settings change
+  useEffect(() => {
+    if (viewRef.current) {
+      viewRef.current.dispatch({
+        effects: fontCompartment.current.reconfigure(
+          EditorView.theme({
+            '.cm-scroller': {
+              fontFamily: settings.fontFamily,
+              fontSize: `${settings.fontSize}px`,
+              lineHeight: '1.6',
+            },
+          })
+        ),
+      });
+    }
+  }, [settings.fontSize, settings.fontFamily]);
 
   // Update content when file changes
   const setContent = useCallback((content: string) => {

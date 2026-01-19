@@ -1,21 +1,17 @@
 import { create } from 'zustand';
-import {
-  getThemePreference,
-  setThemePreference,
-  type ThemePreference,
-} from '@/lib/localStorage';
+import { useSettingsStore } from './settingsStore';
+import type { ThemePreference } from '@/types';
 
 type ResolvedTheme = 'light' | 'dark';
 
 interface ThemeState {
-  preference: ThemePreference;
   resolvedTheme: ResolvedTheme;
 }
 
 interface ThemeActions {
   setPreference: (preference: ThemePreference) => void;
   toggleTheme: () => void;
-  initializeTheme: () => void;
+  updateResolvedTheme: () => void;
 }
 
 function getSystemTheme(): ResolvedTheme {
@@ -39,13 +35,12 @@ function applyThemeToDOM(theme: ResolvedTheme): void {
 }
 
 export const useThemeStore = create<ThemeState & ThemeActions>((set, get) => ({
-  preference: 'system',
   resolvedTheme: 'dark',
 
   setPreference: (preference) => {
-    setThemePreference(preference);
+    useSettingsStore.getState().setTheme(preference);
     const resolvedTheme = resolveTheme(preference);
-    set({ preference, resolvedTheme });
+    set({ resolvedTheme });
     applyThemeToDOM(resolvedTheme);
   },
 
@@ -56,10 +51,10 @@ export const useThemeStore = create<ThemeState & ThemeActions>((set, get) => ({
     get().setPreference(newPreference);
   },
 
-  initializeTheme: () => {
-    const preference = getThemePreference();
-    const resolvedTheme = resolveTheme(preference);
-    set({ preference, resolvedTheme });
+  updateResolvedTheme: () => {
+    const { settings } = useSettingsStore.getState();
+    const resolvedTheme = resolveTheme(settings.theme);
+    set({ resolvedTheme });
     applyThemeToDOM(resolvedTheme);
   },
 }));

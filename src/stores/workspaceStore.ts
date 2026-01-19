@@ -18,6 +18,9 @@ interface WorkspaceActions {
   cancelEditing: () => void;
   confirmEditing: () => void;
   navigateSidebar: (direction: 'up' | 'down') => void;
+  startDrag: (path: string, isDirectory: boolean) => void;
+  setDropTarget: (path: string | null, destinationPath: string | null, isValid: boolean) => void;
+  endDrag: () => void;
 }
 
 function flattenVisibleTree(
@@ -54,6 +57,7 @@ const initialState: WorkspaceState = {
   config: defaultConfig,
   isLoading: false,
   editingState: null,
+  dragState: null,
 };
 
 export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>((set, get) => ({
@@ -180,4 +184,24 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>((set,
       isSelectedItemDirectory: newItem.isDirectory,
     });
   },
+
+  startDrag: (path, isDirectory) =>
+    set({
+      dragState: {
+        draggedPath: path,
+        draggedIsDirectory: isDirectory,
+        dropTargetPath: null,
+        destinationPath: null,
+        isValidDrop: false,
+      },
+    }),
+
+  setDropTarget: (path, destinationPath, isValid) =>
+    set((state) => ({
+      dragState: state.dragState
+        ? { ...state.dragState, dropTargetPath: path, destinationPath, isValidDrop: isValid }
+        : null,
+    })),
+
+  endDrag: () => set({ dragState: null }),
 }));

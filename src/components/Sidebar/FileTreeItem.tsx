@@ -1,5 +1,6 @@
 import { memo, useCallback } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import type { EditingState, FileTreeNode } from '@/types';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { useFileSystem } from '@/hooks/useFileSystem';
@@ -29,11 +30,60 @@ export const FileTreeItem = memo(function FileTreeItem({
   onConfirmRename,
   onCancelEdit,
 }: FileTreeItemProps) {
-  const { config, toggleFolder } = useWorkspaceStore();
+  const { config, toggleFolder, dragState } = useWorkspaceStore();
   const { loadDirectoryContents } = useFileSystem();
 
   const isExpanded = config.expandedFolders.includes(node.path);
   const isSelected = node.path === selectedPath;
+
+  // Drag-and-drop hooks
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    isDragging,
+  } = useDraggable({
+    id: node.path,
+    data: {
+      path: node.path,
+      isDirectory: node.isDirectory,
+      name: node.name,
+    },
+  });
+
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `drop-${node.path}`,
+    data: {
+      path: node.path,
+      isDirectory: node.isDirectory,
+    },
+  });
+
+  // Droppable zone for the children area (expanded folder "room")
+  const { setNodeRef: setChildrenDropRef, isOver: isOverChildren } = useDroppable({
+    id: `drop-children-${node.path}`,
+    data: {
+      path: node.path,
+      isDirectory: true,
+    },
+    disabled: !node.isDirectory || !isExpanded,
+  });
+
+  // Combine refs for items that are both draggable and droppable
+  const setNodeRef = useCallback(
+    (element: HTMLElement | null) => {
+      setDragRef(element);
+      setDropRef(element);
+    },
+    [setDragRef, setDropRef]
+  );
+
+  // Determine visual states
+  const isBeingDragged = isDragging || dragState?.draggedPath === node.path;
+  // Check if either the name row OR children area is being hovered
+  const isDropTarget = (isOver || isOverChildren) && dragState?.dropTargetPath === node.path;
+  const isValidDropTarget = isDropTarget && dragState?.isValidDrop;
+  const isInvalidDropTarget = isDropTarget && !dragState?.isValidDrop;
 
   // Check if we're renaming this item
   const isRenaming = editingState?.mode === 'renaming' && editingState.targetPath === node.path;
@@ -133,19 +183,24 @@ export const FileTreeItem = memo(function FileTreeItem({
   return (
     <>
       <div
+        ref={setNodeRef}
         className={`flex items-center h-7 cursor-pointer select-none transition-colors ${
           isSelected
             ? 'bg-blue-600/30 text-white'
             : 'hover:bg-editor-active text-editor-text'
-        }`}
+        } ${isBeingDragged ? 'opacity-50' : ''} ${
+          isValidDropTarget ? 'bg-blue-500/30 ring-2 ring-blue-500 ring-inset' : ''
+        } ${isInvalidDropTarget ? 'bg-red-500/20 ring-2 ring-red-500 ring-inset' : ''}`}
         style={{ paddingLeft }}
         data-path={node.path}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         onContextMenu={handleContextMenu}
+        aria-expanded={node.isDirectory ? isExpanded : undefined}
+        {...attributes}
+        {...listeners}
         role="treeitem"
         tabIndex={0}
-        aria-expanded={node.isDirectory ? isExpanded : undefined}
       >
         {/* Chevron for directories */}
         {node.isDirectory && (
@@ -171,9 +226,9 @@ export const FileTreeItem = memo(function FileTreeItem({
         <span className="truncate text-sm">{node.name}</span>
       </div>
 
-      {/* Children */}
+      {/* Children - wrapped in droppable zone for expanded folder "room" */}
       {node.isDirectory && isExpanded && (
-        <>
+        <div ref={setChildrenDropRef}>
           {/* Show editable input for new file/folder if creating in this directory */}
           {isCreatingHere && (
             <EditableFileName
@@ -200,7 +255,7 @@ export const FileTreeItem = memo(function FileTreeItem({
               onCancelEdit={onCancelEdit}
             />
           ))}
-        </>
+        </div>
       )}
     </>
   );

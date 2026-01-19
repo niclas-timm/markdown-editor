@@ -20,7 +20,7 @@ export const Sidebar = memo(function Sidebar({
 }: SidebarProps) {
   const { rootPath, setRootPath, setConfig, config, setCurrentFile, currentFile, confirmEditing } =
     useWorkspaceStore();
-  const { loadRootDirectory, createNewFile, createNewDirectory, renameItem, deleteItem } =
+  const { loadRootDirectory, createNewFile, createNewDirectory, renameItem, deleteItem, moveItem } =
     useFileSystem();
   const [isResizing, setIsResizing] = useState(false);
 
@@ -160,6 +160,24 @@ export const Sidebar = memo(function Sidebar({
     [deleteItem, currentFile, setCurrentFile]
   );
 
+  const handleMove = useCallback(
+    async (sourcePath: string, destinationParentPath: string) => {
+      const fileName = sourcePath.split('/').pop()!;
+      const newPath = `${destinationParentPath}/${fileName}`;
+
+      await moveItem(sourcePath, destinationParentPath);
+
+      // Update currentFile if it was moved
+      if (currentFile === sourcePath) {
+        setCurrentFile(newPath);
+      } else if (currentFile?.startsWith(sourcePath + '/')) {
+        // Handle if moved folder contains current file
+        setCurrentFile(currentFile.replace(sourcePath, newPath));
+      }
+    },
+    [moveItem, currentFile, setCurrentFile]
+  );
+
   if (!isVisible) return null;
 
   return (
@@ -191,6 +209,7 @@ export const Sidebar = memo(function Sidebar({
             onCreateFolder={handleCreateFolder}
             onRename={handleRename}
             onDelete={handleDelete}
+            onMove={handleMove}
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-4" style={{ paddingLeft: '16px', paddingRight: '16px', paddingTop: '16px', paddingBottom: '16px' }}>

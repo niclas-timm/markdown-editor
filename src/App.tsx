@@ -8,12 +8,13 @@ import { NotificationToast } from '@/components/Notifications/NotificationToast'
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { useCommandPaletteStore } from '@/stores/commandPaletteStore';
 import { useThemeStore } from '@/stores/themeStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useFileSystem } from '@/hooks/useFileSystem';
 import { getLastWorkspace, clearLastWorkspace } from '@/lib/localStorage';
 import { fileExists } from '@/lib/tauri';
 import { loadWorkspaceConfig } from '@/lib/config';
-import { initializeCommands } from '@/commands';
+import { initializeCommands, commandRegistry } from '@/commands';
 
 initializeCommands();
 
@@ -65,9 +66,9 @@ function App() {
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
-      const { preference, setPreference } = useThemeStore.getState();
-      if (preference === 'system') {
-        setPreference('system');
+      const { settings } = useSettingsStore.getState();
+      if (settings.theme === 'system') {
+        useThemeStore.getState().updateResolvedTheme();
       }
     };
 
@@ -157,6 +158,30 @@ function App() {
     }
   }, [selectedSidebarItem, currentFile, setCurrentFile, deleteItem]);
 
+  const handleOpenSettings = useCallback(() => {
+    const command = commandRegistry.getCommand('settings.open');
+    if (command) {
+      command.execute({
+        rootPath,
+        requestInput: async () => null,
+        showNotification: (message: string, type: 'success' | 'error' | 'info') =>
+          useCommandPaletteStore.getState().addNotification(message, type),
+      });
+    }
+  }, [rootPath]);
+
+  const handleReloadSettings = useCallback(() => {
+    const command = commandRegistry.getCommand('settings.reload');
+    if (command) {
+      command.execute({
+        rootPath,
+        requestInput: async () => null,
+        showNotification: (message: string, type: 'success' | 'error' | 'info') =>
+          useCommandPaletteStore.getState().addNotification(message, type),
+      });
+    }
+  }, [rootPath]);
+
   const shortcutActions = useMemo(
     () => ({
       onSave: handleSave,
@@ -177,6 +202,8 @@ function App() {
       onFocusSidebar: handleFocusSidebar,
       onFocusEditor: handleFocusEditor,
       onDeleteItem: handleDeleteItem,
+      onOpenSettings: handleOpenSettings,
+      onReloadSettings: handleReloadSettings,
     }),
     [
       handleSave,
@@ -187,6 +214,8 @@ function App() {
       handleFocusSidebar,
       handleFocusEditor,
       handleDeleteItem,
+      handleOpenSettings,
+      handleReloadSettings,
     ]
   );
 

@@ -11,6 +11,8 @@ interface ShortcutActions {
   onFocusSidebar: () => void;
   onFocusEditor: () => void;
   onDeleteItem: () => void;
+  onOpenSettings: () => void;
+  onReloadSettings: () => void;
 }
 
 export function useKeyboardShortcuts(actions: ShortcutActions) {
@@ -85,6 +87,20 @@ export function useKeyboardShortcuts(actions: ShortcutActions) {
       if (isMod && e.key === 'Backspace') {
         e.preventDefault();
         actions.onDeleteItem();
+        return;
+      }
+
+      // Cmd+, - Open settings
+      if (isMod && !e.shiftKey && e.code === 'Comma') {
+        e.preventDefault();
+        actions.onOpenSettings();
+        return;
+      }
+
+      // Cmd+Shift+, - Reload settings
+      if (isMod && e.shiftKey && e.code === 'Comma') {
+        e.preventDefault();
+        actions.onReloadSettings();
         return;
       }
     },
