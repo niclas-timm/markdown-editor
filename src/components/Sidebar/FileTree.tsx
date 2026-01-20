@@ -337,10 +337,14 @@ export const FileTree = memo(function FileTree({
 
   const handleConfirmCreate = useCallback(
     async (parentPath: string, name: string, isDirectory: boolean) => {
-      if (isDirectory) {
-        await onCreateFolder(parentPath, name);
+      // If name ends with /, create a folder instead
+      const createAsFolder = isDirectory || name.endsWith('/');
+      const finalName = name.endsWith('/') ? name.slice(0, -1) : name;
+
+      if (createAsFolder) {
+        await onCreateFolder(parentPath, finalName);
       } else {
-        await onCreateFile(parentPath, name);
+        await onCreateFile(parentPath, finalName);
       }
     },
     [onCreateFile, onCreateFolder]
@@ -356,10 +360,14 @@ export const FileTree = memo(function FileTree({
   const handleRootCreateConfirm = useCallback(
     async (name: string) => {
       if (!rootPath) return;
-      if (isCreatingFolderAtRoot) {
-        await onCreateFolder(rootPath, name);
+      // If name ends with /, create a folder instead
+      const createAsFolder = isCreatingFolderAtRoot || name.endsWith('/');
+      const finalName = name.endsWith('/') ? name.slice(0, -1) : name;
+
+      if (createAsFolder) {
+        await onCreateFolder(rootPath, finalName);
       } else {
-        await onCreateFile(rootPath, name);
+        await onCreateFile(rootPath, finalName);
       }
     },
     [rootPath, isCreatingFolderAtRoot, onCreateFile, onCreateFolder]

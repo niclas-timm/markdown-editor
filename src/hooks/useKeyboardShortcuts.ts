@@ -83,11 +83,18 @@ export function useKeyboardShortcuts(actions: ShortcutActions) {
         return;
       }
 
-      // Cmd+Backspace - Delete selected item
+      // Cmd+Backspace - Delete selected item (only when sidebar is focused)
       if (isMod && e.key === 'Backspace') {
-        e.preventDefault();
-        actions.onDeleteItem();
-        return;
+        const activeElement = document.activeElement;
+        const sidebarTree = document.querySelector('[role="tree"]');
+
+        // Only handle delete if the file tree has focus
+        if (sidebarTree && sidebarTree.contains(activeElement)) {
+          e.preventDefault();
+          actions.onDeleteItem();
+          return;
+        }
+        // Otherwise, let the event propagate (e.g., for editor's delete-to-line-start)
       }
 
       // Cmd+, - Open settings

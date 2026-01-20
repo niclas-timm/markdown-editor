@@ -11,12 +11,14 @@ interface EditableFileNameProps {
   onCancel: () => void;
 }
 
-const INVALID_CHARS = /[/\\:*?"<>|]/;
+const INVALID_CHARS = /[\\:*?"<>|]/;
+const INVALID_SLASH = /\/.+/; // Slash is only allowed at the end
 
 function validateName(name: string, showDotfiles: boolean): string | null {
   const trimmed = name.trim();
   if (!trimmed) return 'Name cannot be empty';
   if (INVALID_CHARS.test(trimmed)) return 'Invalid characters in name';
+  if (INVALID_SLASH.test(trimmed)) return 'Slash only allowed at end (to create folder)';
   if (trimmed.startsWith('.') && !showDotfiles) return 'Name cannot start with a dot';
   return null;
 }
@@ -82,11 +84,11 @@ export function EditableFileName({
 
   return (
     <div className="flex items-center h-7" style={{ paddingLeft }}>
-      {/* Icon */}
+      {/* Icon - show folder icon if name ends with / */}
       <span className="w-4 h-4 mr-2 flex items-center justify-center">
         <FileIcon
           name={value || (isDirectory ? 'folder' : 'file')}
-          isDirectory={isDirectory}
+          isDirectory={isDirectory || value.endsWith('/')}
           isExpanded={false}
         />
       </span>
