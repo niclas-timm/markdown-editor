@@ -103,6 +103,10 @@ export const QuickFinder = memo(function QuickFinder({
           }}
           onKeyDown={handleKeyDown}
           placeholder="Search files..."
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
           className="w-full px-4 py-3 bg-editor-bg text-editor-text border-b border-editor-border focus:outline-none placeholder-editor-textMuted"
         />
 

@@ -6,6 +6,7 @@ import {
   lineNumbers,
   highlightActiveLine,
   highlightActiveLineGutter,
+  scrollPastEnd,
 } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
@@ -139,6 +140,7 @@ export function useEditor({ onChange, onSave }: UseEditorOptions) {
         saveKeymap,
         updateListener,
         EditorView.lineWrapping,
+        scrollPastEnd(),
         EditorView.theme({
           '&': {
             height: '100%',

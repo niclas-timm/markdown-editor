@@ -126,6 +126,10 @@ export const CommandPalette = memo(function CommandPalette() {
           }}
           onKeyDown={handleKeyDown}
           placeholder="Type a command..."
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
           className="w-full px-4 py-3 bg-editor-bg text-editor-text border-b border-editor-border focus:outline-none placeholder-editor-textMuted"
           disabled={isExecuting}
         />

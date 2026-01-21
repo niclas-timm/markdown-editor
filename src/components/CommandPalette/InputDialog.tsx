@@ -69,6 +69,10 @@ export const InputDialog = memo(function InputDialog({
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             className="w-full px-3 py-2 bg-editor-bg text-editor-text border border-editor-border rounded focus:outline-none focus:border-blue-500 placeholder-editor-textMuted"
           />
           {error && <p className="mt-2 text-xs text-red-400">{error}</p>}

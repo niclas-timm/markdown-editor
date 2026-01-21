@@ -104,6 +104,10 @@ export function EditableFileName({
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         placeholder={placeholder}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
         className={`flex-1 bg-editor-bg px-1 py-0.5 text-sm rounded border ${
           error ? 'border-red-500' : 'border-blue-500'
         } focus:outline-none text-editor-text min-w-0`}
